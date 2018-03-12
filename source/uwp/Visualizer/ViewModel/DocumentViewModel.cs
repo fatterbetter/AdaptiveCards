@@ -19,6 +19,133 @@ using AdaptiveCardVisualizer.ResourceResolvers;
 
 namespace AdaptiveCardVisualizer.ViewModel
 {
+    public class MyCustomInput :
+    IAdaptiveInputElement, IAdaptiveCardElement, IAdaptiveElementWithRemoteResources
+    {
+        public IReadOnlyList<Uri> GetResourceUris()
+        {
+            List<Uri> uris = new List<Uri>();
+
+            Uri uri = new Uri("http://adaptivecards.io/content/cats/CustomUri.png");
+            uris.Add(uri);
+
+            return uris;
+        } 
+
+        public string Foo()
+        {
+            return "This is a custom element!";
+        }
+
+        public ElementType ElementType
+        {
+            get
+            {
+                return ElementType.Custom;
+            }
+        }
+
+        public string ElementTypeString
+        {
+            get
+            {
+                return "MyInput";
+            }
+        }
+
+        public Spacing Spacing
+        {
+            get
+            {
+                return new Spacing();
+            }
+            set { }
+        }
+
+        public bool Separator
+        {
+            get
+            {
+                return false;
+            }
+            set { }
+        }
+
+        public bool IsRequired
+        {
+            get
+            {
+                return false;
+            }
+            set { }
+        }
+
+        public string Id
+        {
+            get
+            {
+                return "customId";
+            }
+            set { }
+        }
+
+        public JsonObject ToJson()
+        {
+            JsonObject json = new JsonObject();
+            JsonValue jsonValue = JsonValue.CreateStringValue("MyStuff");
+            json.Add("type", jsonValue);
+            return json;
+        }
+
+        public JsonObject AdditionalProperties
+        {
+            get { return new JsonObject(); }
+            set { }
+        }
+    }
+
+    public class MyCustomSerializer : //BECKYTODO - rename interface "serializer"?
+    IAdaptiveInputValue
+    {
+        public string CurrentValue
+        {
+            get
+            {
+                return "Elephant";
+            }
+        }
+
+        public IAdaptiveInputElement InputElement
+        {
+            get
+            {
+                return new MyCustomInput();
+            }
+        }
+    }
+    public class CustomParser : IAdaptiveElementParser, IAdaptiveElementRenderer
+    {
+        public IAdaptiveCardElement FromJson(JsonObject jsonObject, AdaptiveElementParserRegistration elementParsers, AdaptiveActionParserRegistration actionParsers)
+        {
+            MyCustomInput element = new MyCustomInput();
+            JsonObject json = element.ToJson();
+            string jsonString = json.ToString();
+
+            return element;
+        }
+
+        public UIElement Render(IAdaptiveCardElement element, AdaptiveRenderContext context, AdaptiveRenderArgs renderArgs)
+        {
+            TextBlock text = new TextBlock();
+            text.Text = ((MyCustomInput)element).Foo();
+
+            IAdaptiveInputValue value = new MyCustomSerializer();
+            context.AddInputValue(value);
+
+            return text;
+        }
+    }
+
     public class DocumentViewModel : GenericDocumentViewModel
     {
         private static AdaptiveCardRenderer _renderer;
@@ -79,7 +206,22 @@ namespace AdaptiveCardVisualizer.ViewModel
                 JsonObject jsonObject;
                 if (JsonObject.TryParse(payload, out jsonObject))
                 {
-                    AdaptiveCardParseResult parseResult = AdaptiveCard.FromJson(jsonObject);
+                    CustomParser customParser = new CustomParser();
+
+                    AdaptiveElementParserRegistration parserRegistration = new AdaptiveElementParserRegistration();
+                    parserRegistration.Set("MyInput", customParser);
+
+                    AdaptiveCardParseResult parseResult = AdaptiveCard.FromJson(jsonObject, parserRegistration, null);
+
+                    _renderer.ElementRenderers.Set("MyInput", customParser);
+
+                    IReadOnlyList<Uri> uris = parseResult.AdaptiveCard.GetResourceUris();
+                    foreach (Uri uri in uris)
+                    {
+                        string uriString = uri.ToString();
+                    }
+
+                    string jsonString = parseResult.AdaptiveCard.ToJson().ToString();
 
                     RenderedAdaptiveCard renderResult = _renderer.RenderAdaptiveCard(parseResult.AdaptiveCard);
                     if (renderResult.FrameworkElement != null)

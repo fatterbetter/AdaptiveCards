@@ -3,6 +3,8 @@
 
 using namespace Microsoft::WRL;
 using namespace ABI::AdaptiveNamespace;
+using namespace Microsoft::WRL::Wrappers;
+using namespace ABI::AdaptiveCards::Rendering::Uwp;
 
 AdaptiveNamespaceStart
 
@@ -54,6 +56,15 @@ AdaptiveNamespaceStart
         JsonObjectToJsonCpp(jsonObject.Get(), &jsonCppValue);
 
         return jsonCppValue;
+    }
+
+    void CustomElementWrapper::GetResourceUris(std::vector<std::string>& resourceUris)
+    {
+        ComPtr<ABI::AdaptiveCards::Rendering::Uwp::IAdaptiveElementWithRemoteResources> remoteResources;
+        if (SUCCEEDED(m_cardElement.As(&remoteResources)))
+        {
+            RemoteResourceElementToUriStringVector(remoteResources.Get(), resourceUris);
+        }
     }
 
     HRESULT CustomElementWrapper::GetWrappedElement(ABI::AdaptiveNamespace::IAdaptiveCardElement** cardElement)

@@ -3,6 +3,8 @@
 
 using namespace Microsoft::WRL;
 using namespace ABI::AdaptiveNamespace;
+using namespace Microsoft::WRL::Wrappers;
+using namespace ABI::AdaptiveCards::Rendering::Uwp;
 
 AdaptiveNamespaceStart
 
@@ -50,4 +52,12 @@ HRESULT CustomActionWrapper::GetWrappedElement(ABI::AdaptiveNamespace::IAdaptive
     return m_actionElement.CopyTo(actionElement);
 }
 
+void CustomActionWrapper::GetResourceUris(std::vector<std::string>& resourceUris)
+{
+    ComPtr<ABI::AdaptiveCards::Rendering::Uwp::IAdaptiveElementWithRemoteResources> remoteResources;
+    if (SUCCEEDED(m_actionElement.As(&remoteResources)))
+    {
+        RemoteResourceElementToUriStringVector(remoteResources.Get(), resourceUris);
+    }
+}
 AdaptiveNamespaceEnd
