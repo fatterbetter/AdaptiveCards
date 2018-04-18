@@ -2,7 +2,6 @@
 
 #include "pch.h"
 #include "Enums.h"
-#include "Height.h"
 #include "json/json.h"
 #include "BaseActionElement.h"
 #include "ParseUtil.h"
@@ -29,8 +28,8 @@ public:
     virtual bool GetSeparator() const;
     virtual void SetSeparator(const bool value);
 
-    Height GetHeight() const;
-    void SetHeight(const Height value);
+    HeightType GetHeight() const;
+    void SetHeight(const HeightType value);
 
     virtual Spacing GetSpacing() const;
     virtual void SetSpacing(const Spacing value);
@@ -69,7 +68,7 @@ private:
     //std::shared_ptr<Separator> m_separator; Issue #629 to make separator an object
     bool m_separator;
     Json::Value m_additionalProperties;
-    Height m_height;
+    HeightType m_height;
 };
 
 template <typename T>
@@ -85,7 +84,8 @@ std::shared_ptr<T> BaseCardElement::Deserialize(const Json::Value& json)
     baseCardElement->SetSeparator(ParseUtil::GetBool(json, AdaptiveCardSchemaKey::Separator, false));
     baseCardElement->SetId(ParseUtil::GetString(json, AdaptiveCardSchemaKey::Id));
 
-    baseCardElement->SetHeight(Height::Deserialize(json));
+    baseCardElement->SetHeight(
+        ParseUtil::GetEnumValue<HeightType>(json, AdaptiveCardSchemaKey::Height, HeightType::Auto, HeightTypeFromString));
 
     /* Issue #629 to make separator an object
     Json::Value separatorJson = json.get(AdaptiveCardSchemaKeyToString(AdaptiveCardSchemaKey::Separator), Json::Value());
